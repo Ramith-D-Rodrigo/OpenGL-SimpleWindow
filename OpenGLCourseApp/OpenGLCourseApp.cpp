@@ -7,9 +7,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <glm\glm.hpp>
+#include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\type_ptr.hpp>
 
+//use the following in the newer glm versions
+//glm::mat4 model(1.0f);
+//glm::mat4 model = glm::mat4(1.0f);
+//model = glm::mat(1.0f);
 
-GLuint VAO, VBO, shader, uniformXMove; //moving the triangle
+GLuint VAO, VBO, shader, uniformModel; //uniform model now
 
 bool direction = true;  //right = true, left = false
 float triOffset = 0.0f;
@@ -28,11 +35,11 @@ static const char* vShader = R"(
                                                                             
 layout (location = 0) in vec3 pos;
 
-uniform float xMove;                                          
+uniform mat4 model;                                          
                                                                             
 void main()                                                                 
 {                                                                          
-    gl_Position = vec4(0.4 * pos.x + xMove,0.4 * pos.y, pos.z, 1.0);
+    gl_Position = model * vec4(0.4 * pos.x,0.4 * pos.y, pos.z, 1.0);
 }
 )";
 
@@ -137,7 +144,7 @@ void CompileShaders() {
     }
 
     //get the location of the uniform variable
-    uniformXMove = glGetUniformLocation(shader, "xMove");
+    uniformModel = glGetUniformLocation(shader, "model");
 }
 
 
@@ -212,7 +219,12 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
-        glUniform1f(uniformXMove, triOffset); //1f meaning single point float
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(triOffset, triOffset, 0.0f));
+
+        //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
+        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3); //so we can fill the colors
