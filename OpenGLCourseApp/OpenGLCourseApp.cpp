@@ -6,8 +6,16 @@
 #include <GLFW/glfw3.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
-GLuint VAO, VBO, shader;
+
+GLuint VAO, VBO, shader, uniformXMove; //moving the triangle
+
+bool direction = true;  //right = true, left = false
+float triOffset = 0.0f;
+float triMaxOffset = 0.8f;  //to switch the direction
+float triInc = 0.0005f; //speed to move
+
 
 //window size
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -18,11 +26,13 @@ using namespace std;
 static const char* vShader = R"(
 #version 330                                                                
                                                                             
-layout (location = 0) in vec3 pos;                                          
+layout (location = 0) in vec3 pos;
+
+uniform float xMove;                                          
                                                                             
 void main()                                                                 
-{                                                                           
-    gl_Position = vec4(0.5 * pos.x,0.5 * pos.y, pos.z, 1.0);
+{                                                                          
+    gl_Position = vec4(0.4 * pos.x + xMove,0.4 * pos.y, pos.z, 1.0);
 }
 )";
 
@@ -125,6 +135,9 @@ void CompileShaders() {
         printf("Error validating the programme! %s\n", eLog);
         return;
     }
+
+    //get the location of the uniform variable
+    uniformXMove = glGetUniformLocation(shader, "xMove");
 }
 
 
@@ -183,11 +196,23 @@ int main()
         //get and handle user input events
         glfwPollEvents();
 
+        if (direction) {
+            triOffset += triInc;
+        }
+        else {
+            triOffset -= triInc;
+        }
+
+        if (abs(triOffset) >= triMaxOffset) {
+            direction = !direction;
+        }
+
         //clear the window
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black background
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
+        glUniform1f(uniformXMove, triOffset); //1f meaning single point float
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3); //so we can fill the colors
