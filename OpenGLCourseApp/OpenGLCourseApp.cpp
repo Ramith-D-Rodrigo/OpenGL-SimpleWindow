@@ -17,12 +17,14 @@
 //model = glm::mat(1.0f);
 
 GLuint VAO, VBO, shader, uniformModel; //uniform model now
+const float toRadians = 3.14159265f / 180.0f;
 
 bool direction = true;  //right = true, left = false
 float triOffset = 0.0f;
 float triMaxOffset = 0.8f;  //to switch the direction
 float triInc = 0.0005f; //speed to move
 
+float currAngle = 0.0f;
 
 //window size
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -214,14 +216,21 @@ int main()
             direction = !direction;
         }
 
+        currAngle += 0.01f;
+
+        if (currAngle >= 360) {
+            currAngle -= 360;
+        }
+
         //clear the window
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black background
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(triOffset, triOffset, 0.0f));
+        glm::mat4 model = glm::mat4(1.0f); //identity matrix that is used to transform the position
+        model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+        model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
         //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
