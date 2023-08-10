@@ -26,6 +26,12 @@ float triInc = 0.0005f; //speed to move
 
 float currAngle = 0.0f;
 
+float currSize = 0.5f;
+float minSize = 0.1f;
+float maxSize = 0.8f;
+bool sizeDirection = true;
+
+
 //window size
 const GLint WIDTH = 800, HEIGHT = 600;
 
@@ -41,7 +47,7 @@ uniform mat4 model;
                                                                             
 void main()                                                                 
 {                                                                          
-    gl_Position = model * vec4(0.4 * pos.x,0.4 * pos.y, pos.z, 1.0);
+    gl_Position = model * vec4(pos, 1.0);
 }
 )";
 
@@ -222,6 +228,17 @@ int main()
             currAngle -= 360;
         }
 
+        if (direction) {
+            currSize += 0.0001f;
+        }
+        else {
+            currSize -= 0.0001f;
+        }
+
+        if (currSize >= maxSize || currSize <= minSize) {
+            sizeDirection = !sizeDirection;
+        }
+
         //clear the window
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black background
         glClear(GL_COLOR_BUFFER_BIT);
@@ -229,8 +246,10 @@ int main()
         glUseProgram(shader);
 
         glm::mat4 model = glm::mat4(1.0f); //identity matrix that is used to transform the position
+
         model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-        model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        //model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::scale(model, glm::vec3(currSize, 0.5f, 1.0f));
 
         //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
