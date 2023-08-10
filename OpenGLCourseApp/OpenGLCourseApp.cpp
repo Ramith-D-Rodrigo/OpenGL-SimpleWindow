@@ -47,7 +47,7 @@ uniform mat4 model;
                                                                             
 void main()                                                                 
 {                                                                          
-    gl_Position = model * vec4(pos, 1.0);
+    gl_Position = model * vec4(pos, 1.0); //we can pass pos vector directly, no need to access each axis
 }
 )";
 
