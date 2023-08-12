@@ -43,24 +43,31 @@ static const char* vShader = R"(
                                                                             
 layout (location = 0) in vec3 pos;
 
-uniform mat4 model;                                          
+uniform mat4 model;  
+
+out vec4 vCol; //vertex color                                        
                                                                             
 void main()                                                                 
 {                                                                          
     gl_Position = model * vec4(pos, 1.0); //we can pass pos vector directly, no need to access each axis
+    vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);  
+    //make the color to the position values (using clamp to deal with the negative values
+    //set between 0 and 1)
 }
 )";
 
 
 //fragment shader
 static const char* fShader = R"(
-#version 330                                                                
+#version 330                 
+
+in vec4 vCol;   //get it from the vShader                                               
                                                                             
 out vec4 colour;                                                            
                                                                             
 void main()                                                                 
 {                                                                           
-    colour = vec4(0.5, 0.8, 0.2, 1.0);                                      
+    colour = vCol;                                      
 }
 )";
 
@@ -247,9 +254,9 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f); //identity matrix that is used to transform the position
 
-        model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+        //model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
         //model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::scale(model, glm::vec3(currSize, 0.5f, 1.0f));
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 1.0f));
 
         //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
