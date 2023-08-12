@@ -16,7 +16,7 @@
 //glm::mat4 model = glm::mat4(1.0f);
 //model = glm::mat(1.0f);
 
-GLuint VAO, VBO, IBO, shader, uniformModel; //uniform model now (IBO - index buffer object)
+GLuint VAO, VBO, IBO, shader, uniformModel, uniformProjection; //uniform model now (IBO - index buffer object)
 const float toRadians = 3.14159265f / 180.0f;
 
 bool direction = true;  //right = true, left = false
@@ -43,13 +43,14 @@ static const char* vShader = R"(
                                                                             
 layout (location = 0) in vec3 pos;
 
-uniform mat4 model;  
+uniform mat4 model;
+uniform mat4 projection;    //how the camera translates what can be seen the screen  
 
 out vec4 vCol; //vertex color                                        
                                                                             
 void main()                                                                 
 {                                                                          
-    gl_Position = model * vec4(pos, 1.0); //we can pass pos vector directly, no need to access each axis
+    gl_Position = projection * model * vec4(pos, 1.0); //we can pass pos vector directly, no need to access each axis
     vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);  
     //make the color to the position values (using clamp to deal with the negative values
     //set between 0 and 1)
@@ -175,6 +176,7 @@ void CompileShaders() {
 
     //get the location of the uniform variable
     uniformModel = glGetUniformLocation(shader, "model");
+    uniformProjection = glGetUniformLocation(shader, "projection");
 }
 
 
@@ -230,6 +232,8 @@ int main()
     CreateTriangle();
     CompileShaders();
 
+    glm::mat4 projection = glm::perspective(45.0f, (GLfloat)bufferWidth / (GLfloat)bufferHeight, 0.1f, 100.0f); //fov, aspect ratiom near, far
+
     //loop until window closed
     while (!glfwWindowShouldClose(mainWindow)) {
         //get and handle user input events
@@ -271,12 +275,13 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f); //identity matrix that is used to transform the position
 
-        //model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-        model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(triOffset, 0.0f, -2.5f));
+        //model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 1.0f));
 
         //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
