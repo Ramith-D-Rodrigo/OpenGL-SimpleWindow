@@ -16,7 +16,7 @@
 //glm::mat4 model = glm::mat4(1.0f);
 //model = glm::mat(1.0f);
 
-GLuint VAO, VBO, shader, uniformModel; //uniform model now
+GLuint VAO, VBO, IBO, shader, uniformModel; //uniform model now (IBO - index buffer object)
 const float toRadians = 3.14159265f / 180.0f;
 
 bool direction = true;  //right = true, left = false
@@ -72,8 +72,18 @@ void main()
 )";
 
 void CreateTriangle() {
+
+    //specify the order
+    unsigned int indices[] = {
+        0, 3, 1,
+        1, 3, 2,
+        2, 3, 0, //front
+        0, 1, 2 //base
+    };
+
     GLfloat vertices[] = {
         -1.0f, -1.0f, 0.0f, //bottom left
+        0.0f, -1.0f, 1.0f,  //background
         1.0f, -1.0f, 0.0f,  //bottm right
         0.0f, 1.0f, 0.0f    //top center
     };
@@ -82,6 +92,10 @@ void CreateTriangle() {
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
+
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -93,6 +107,7 @@ void CreateTriangle() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);   //unbinding the previous one
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); //unbind after the VAO
 }
 
 void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType) {
@@ -207,6 +222,8 @@ int main()
         return 1;
     }
 
+    glEnable(GL_DEPTH_TEST); //enable depth to check which traingle has more depth and which should be at the front
+
     //setup view port
     glViewport(0, 0, bufferWidth, bufferHeight);
 
@@ -248,21 +265,23 @@ int main()
 
         //clear the window
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black background
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader);
 
         glm::mat4 model = glm::mat4(1.0f); //identity matrix that is used to transform the position
 
         //model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-        //model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, currAngle * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 1.0f));
 
         //glUniform1f(uniformXMove, triOffset); //1f meaning single point float
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3); //so we can fill the colors
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0); //12 because we have 4 indices that have 3 values for each
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         glUseProgram(0);
